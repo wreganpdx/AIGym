@@ -5,6 +5,7 @@ Machine Learning
 Portland State University
 Final Project
 """
+import os
 import numpy as np
 from HiddenNetwork import  HiddenNetwork
 from Util import Util
@@ -18,15 +19,28 @@ class Network(object):
     perceptrons = []
     global classes
     classes = []
-
-    def __init__(self, _nodes, _classes, weights):
+    global lastObs
+    lastObs = []
+    global avgObs
+    avgObs = []
+    global metaLayers
+    metaLayers = 1
+    global trace
+    trace = "obs"
+    def __init__(self, _nodes, _classes, weights, obs, _metaLayers, trace):
         global perceptrons
         perceptrons = []
         global hiddenLayer
         hiddenLayer = []
         global classes
         classes = np.arange(_classes)
-        #(self, _learnRate, clas, seed, weights):
+        global lastObs
+        lastObs = obs[:]
+	global avgObs
+        avgObs = obs[:]
+	global metaLayers
+	metaLayers = _metaLayers
+	_nodes = _nodes * _metaLayers
         for k in range(len(classes)):
             p = Neuron(classes[k], classes[k], _nodes)  # important to set perceptrons here for each new learning rate
             perceptrons.append(p)
@@ -35,6 +49,37 @@ class Network(object):
             h = HiddenNetwork(i * 1000 + i, i %len(classes), weights)  # important to set perceptrons here for each new learning rate
             hiddenLayer.append(h)
 
+    @staticmethod 
+    def saveWeightsToDisk(path):
+	global perceptrons
+	global hiddenLayer
+	p = []
+	h = []
+	for i in range(len(perceptrons)):
+	    p.append(perceptrons[i].w)
+	for k in range(len(hiddenLayer)):
+	    h.append(hiddenLayer[k].w)
+	np.save(path + "perc", p)
+	np.save(path + "hid", h)
+
+    @staticmethod 
+    def loadWeightsFromDisk(path):
+	global perceptrons
+	global hiddenLayer
+	print("checking for weights %s" % path)
+	if os.path.isfile(path + "perc.npy") != True:
+	    return
+	print("loading weights")
+	p = np.load(path + "perc.npy")
+	h = np.load(path + "hid.npy")
+	for i in range(len(perceptrons)):
+	    perceptrons[i].w = p[i]
+	a1 = len(hiddenLayer)
+	a2 = len(h)
+	r = min(a1, a2)
+	for k in range(r):
+	    hiddenLayer[k].w = h[k]
+	    
     @staticmethod
     def applyAnnealing(T, steps, rew):
         if rew:
@@ -121,10 +166,25 @@ class Network(object):
         global hiddenLayer
         global perceptrons
         global classes
-
+	global lastObs
+	global avgObs
+	global metaLayers
+	
+	deltaObs = obs - lastObs
+	avgObs = avgObs * .75
+	avgObs = avgObs + .25*deltaObs
         result = np.empty(len(hiddenLayer))
-        for i in range(len(hiddenLayer)):
-            result[i] = hiddenLayer[i].compute(obs)
+	myRange = len(hiddenLayer) / metaLayers
+	
+        for i in range(myRange):
+            result[i] = hiddenLayer[i].compute(deltaObs)
+	if metaLayers >= 2:
+	    for i in range(myRange, myRange*2):
+                result[i] = hiddenLayer[i].compute(obs)
+	if metaLayers >= 3:
+	    for i in range(myRange*2, myRange*3):
+                result[i] = hiddenLayer[i].compute(avgObs)
+	lastObs = obs[:]
 
         scores = np.empty(len(classes))
         bestScore = perceptrons[0].compute(result)

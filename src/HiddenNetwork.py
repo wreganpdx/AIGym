@@ -19,13 +19,7 @@ class HiddenNetwork(object):
         np.random.seed(seed)  # place a random seed (actually it's just the index, but it works since each perceptron has its own index)
 
         self.rekick()
-        self.delta = np.random.rand(weights)
-        self.delta -= 1.0
-        self.delta *= .1
-
-        self.deltaBias = np.random.rand();
-        self.deltaBias -= 1.0
-        self.deltaBias *= .1
+	self.resetDelta()
         self.wCopy = self.w[:]
         self.copyWeights()
 
@@ -34,12 +28,10 @@ class HiddenNetwork(object):
 
     def copyWeights(self):
         np.copyto(self.wCopy, self.w)
-        self.biasCopy = self.personalBias
 
 
     def restoreWeights(self):
         np.copyto(self.w,self.wCopy)
-        self.personalBias = self.biasCopy
 
         #print(self.w, self.personalBias),
 
@@ -51,38 +43,29 @@ class HiddenNetwork(object):
             self.backpropReward()
 
     def resetDelta(self):
-        self.delta = np.random.rand(self.weights)
+        self.delta = np.random.random_sample(self.weights)
         self.delta -= 1.0
         self.delta *= .1
-        self.deltaBias = np.random.rand();
-        self.deltaBias -= 1.0
-        self.deltaBias *= .1
-
     def rekick(self):
-        self.w = np.random.rand(self.weights)  # set weights
-        self.personalBias = random.random()
-        self.personalBias += -1
-        self.personalBias *= .5
-        for i in range(len(self.w)):
-            self.w[i] -= 1  # adjust weights so we have positive and negative weights
-            self.w[i] *= .5
+        self.w = np.random.random_sample(self.weights)  # set weights
+        self.w -= 1.0
+        self.w *= .1
 
         self.resetDelta()
 
 
     def backpropPunish(self):
         self.w = self.w +  self.delta * -1
-        self.personalBias = self.personalBias - self.deltaBias
         self.resetDelta()
 
     def backpropReward(self):
         self.w = self.w + self.delta
-        self.personalBias = self.personalBias + self.deltaBias
         self.resetDelta()
 
 
     def compute(self, obs):
-        self.personalPrediction = Util.sigmoid(np.dot(self.w + self.delta, obs.transpose()) + self.personalBias + self.deltaBias)
+	
+        self.personalPrediction = Util.sigmoid(np.dot((self.w + self.delta).flatten(), obs.flatten().transpose()))
         return self.personalPrediction
 
 

@@ -17,6 +17,13 @@ class DataInit(object):
 
         exercise = sys.argv[1]
         numIterations = sys.argv[2]
+	render = True
+	printStuff = True
+	if arguments > 2 and int(sys.argv[3]) != 1:
+            render = False
+
+	if arguments > 3 and int(sys.argv[3]) != 1:
+            printStuff = False
 
 
-        return (exercise, numIterations)
+        return (exercise, numIterations, render, printStuff)

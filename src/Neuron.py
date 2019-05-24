@@ -24,9 +24,6 @@ class Neuron(object):
         self.delta -= 1.0
         self.delta *= .1
 
-        self.deltaBias = np.random.rand()
-        self.deltaBias -= 1.0
-        self.deltaBias *= .1
         self.fitness = 0
         self.rekick()
         self.wCopy = self.w[:]
@@ -37,12 +34,10 @@ class Neuron(object):
 
     def copyWeights(self):
         np.copyto(self.wCopy, self.w)
-        self.biasCopy = self.personalBias
 
 
     def restoreWeights(self):
         np.copyto(self.w,self.wCopy)
-        self.personalBias = self.biasCopy
 
 
     def backPropagate(self,reward):
@@ -54,35 +49,27 @@ class Neuron(object):
 
     def backpropPunish(self):
         self.w = self.w + self.delta * -1
-        self.personalBias = self.personalBias + self.deltaBias * -1
 
     def backpropReward(self):
         self.w = self.w + self.delta
-        self.personalBias = self.personalBias + self.deltaBias * 1
 
     def resetDelta(self):
         self.delta = np.random.rand(self.weights)
         self.delta -= 1.0
         self.delta *= .1
-        self.deltaBias = np.random.rand();
-        self.deltaBias -= 1.0
-        self.deltaBias *= .1
 
     def rekick(self):
         self.w = np.random.rand(self.weights)  # set weights
-        self.personalBias = random.random()
         self.w -= 1.0
-        self.w *= 2
-        self.personalBias -= 1.0
-        self.personalBias *= 2.0
+        self.w *= .1
         self.resetDelta()
 
     def resetFitness(self):
         self.fitness = 0
 
-    def compute(self, obs, bias=1):
-        self.personalPrediction = Util.sigmoid(np.dot(self.w + self.delta, obs.transpose()) + self.personalBias + self.deltaBias )
-        self.prediction = self.personalPrediction * bias
+    def compute(self, obs):
+        self.personalPrediction = Util.sigmoid(np.dot(self.w + self.delta, obs.transpose())  )
+        self.prediction = self.personalPrediction
         return self.prediction
 
 
