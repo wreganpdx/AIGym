@@ -45,12 +45,15 @@ class HiddenNetwork(object):
     def resetDelta(self):
         self.delta = np.random.random_sample(self.weights)
         self.delta -= 1.0
-        self.delta *= .1
+        self.delta *= .01
+
+    def zeroDelta(self):
+        self.delta = self.delta * 0
+
     def rekick(self):
         self.w = np.random.random_sample(self.weights)  # set weights
         self.w -= 1.0
         self.w *= .1
-
         self.resetDelta()
 
 
@@ -65,7 +68,7 @@ class HiddenNetwork(object):
 
     def compute(self, obs):
 	
-        self.personalPrediction = Util.sigmoid(np.dot((self.w + self.delta).flatten(), obs.flatten().transpose()))
+        self.personalPrediction = Util.sigmoid(np.dot((self.w + self.delta).flatten(), obs))
         return self.personalPrediction
 
 

@@ -56,7 +56,16 @@ class Neuron(object):
     def resetDelta(self):
         self.delta = np.random.rand(self.weights)
         self.delta -= 1.0
-        self.delta *= .1
+        self.delta *= .01
+
+    def anealDelta(self, a, rew):
+        self.delta = np.random.rand(self.weights)
+        self.delta *= .01
+	self.delta *= rew
+	self.delta *= (1-a)
+
+    def zeroDelta(self):
+        self.delta = self.delta * 0
 
     def rekick(self):
         self.w = np.random.rand(self.weights)  # set weights

@@ -55,10 +55,10 @@ print(action_space)
 #and delta will eliminate things that are static.
 #while current obs will give more stronger signals for things
 #that are always the same
-net = Network(action_space, action_space, obs_space,obs, 1, "dObs")
+net = Network(action_space, action_space, obs_space,obs, 1, "dObs", False)
 
 b = '%d' % int(best.getBest())
-#b = "840"
+#b = "510"
 
 Network.loadWeightsFromDisk(exercise+ "/weights/" + b)
 
@@ -89,22 +89,11 @@ duration = duration * 60
 render_t = time.time()
 start = time.time()
 
+net.zeroDelta()
+
 #lives = env.ale.lives()
 
-def saveBestStuff():
-    global rew
-    global episodes
-    global steps
-    global bestReward
-    global bestSurvival
-    bestReward = rew
-    best.setBest(bestReward)
-    bestSurvival = curSteps
-    net.saveBest()
-    best.save()
-    b = '%d'%int(bestReward)
-    Network.saveWeightsToDisk(exercise+ "/weights/" + b)
-    print("save best: ", bestReward)
+
 
 def resetLevel():
     global lastReward
@@ -140,22 +129,14 @@ while True:
     if done != True:
         rew += reward
     else:
-        if rew > bestReward or (rew == bestReward and curSteps > bestSurvival):
-	    print("rew : %d, bestReward: %d, curSteps:%d, best_survival%d"%(rew,bestReward,curSteps,bestSurvival))
-            saveBestStuff()
-        else:
-            net.applyAnnealing(T, duration, rew > lastReward)
 	resetLevel()
-
-    action = net.calculateObs(observation)
+    a = env.action_space.sample()
+    action = net.calculateObs(observation, a)
 
 #np.savetxt(s_folder + "/" + s_file, np.array([[1, 2], [3, 4]]), fmt="%s")
 print('bestscore :%d', bestReward)
 print('episodes :%d', episodes)
 
-best.save()
-Network.restoreBest()
-b = '%d'%int(bestReward)
 
 _label0 = exercise #nice formating
 plt.xlabel("Episodes")

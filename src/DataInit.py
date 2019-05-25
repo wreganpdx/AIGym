@@ -19,11 +19,20 @@ class DataInit(object):
         numIterations = sys.argv[2]
 	render = True
 	printStuff = True
+	obsDefault = "deltaObs"
 	if arguments > 2 and int(sys.argv[3]) != 1:
             render = False
 
-	if arguments > 3 and int(sys.argv[3]) != 1:
+	if arguments > 3 and int(sys.argv[4]) != 1:
             printStuff = False
+	
+	if arguments > 4:
+	    if sys.argv[4] == "deltaObs":
+	         obsDefault = sys.argv[4]
+	    if sys.argv[4] == "obs":
+	         obsDefault = sys.argv[4]
+	    if sys.argv[4] == "diffObs": 
+	         obsDefault = sys.argv[4]
 
 
-        return (exercise, numIterations, render, printStuff)
+        return (exercise, numIterations, render, printStuff, obsDefault)

@@ -55,10 +55,10 @@ print(action_space)
 #and delta will eliminate things that are static.
 #while current obs will give more stronger signals for things
 #that are always the same
-net = Network(action_space, action_space, obs_space,obs, 1, "dObs")
+net = Network(action_space, action_space, obs_space,obs, 1, "dObs", False)
 
 b = '%d' % int(best.getBest())
-#b = "840"
+#b = "310"
 
 Network.loadWeightsFromDisk(exercise+ "/weights/" + b)
 
@@ -89,7 +89,7 @@ duration = duration * 60
 render_t = time.time()
 start = time.time()
 
-#lives = env.ale.lives()
+lives = env.ale.lives()
 
 def saveBestStuff():
     global rew
@@ -97,6 +97,7 @@ def saveBestStuff():
     global steps
     global bestReward
     global bestSurvival
+    
     bestReward = rew
     best.setBest(bestReward)
     bestSurvival = curSteps
@@ -137,7 +138,7 @@ while True:
 	env.render()
 
     observation, reward, done, info = env.step(action)
-    if done != True:
+    if done != True and env.ale.lives() == lives:
         rew += reward
     else:
         if rew > bestReward or (rew == bestReward and curSteps > bestSurvival):
@@ -146,14 +147,13 @@ while True:
         else:
             net.applyAnnealing(T, duration, rew > lastReward)
 	resetLevel()
-
-    action = net.calculateObs(observation)
+    rand = env.action_space.sample()
+    action = net.calculateObs(observation, rand)
 
 #np.savetxt(s_folder + "/" + s_file, np.array([[1, 2], [3, 4]]), fmt="%s")
 print('bestscore :%d', bestReward)
 print('episodes :%d', episodes)
 
-best.save()
 Network.restoreBest()
 b = '%d'%int(bestReward)
 
