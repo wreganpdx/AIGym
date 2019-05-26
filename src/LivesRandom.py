@@ -4,11 +4,11 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from DataInit import DataInit
-from NetworkObs import NetworkObs
+from Network import Network
 from HiddenNetwork import HiddenNetwork
 from SampleSpace import SampleSpace
 from gym_recording.wrappers import TraceRecordingWrapper
-from ObsBestScores import ObsBestScores
+from BestScores import BestScores
 
 
 
@@ -19,19 +19,21 @@ from gym import spaces
 
 exercise, numMinutes, render, printStuff, obsDefault = DataInit.getData()
 
-best = ObsBestScores(exercise)
+best = BestScores(exercise)
 
 
 
 s_folder = exercise
 t = time.time()
 s_file = str(t) + "chart"
-t = time.time()
+s_file_weights = str(t) + "weights"
+print(s_file)
+print(s_file_weights)
 if os.path.exists(s_folder) != True:
     os.mkdir(s_folder)
 
-if os.path.exists(s_folder + "/obs_weights") != True:
-    os.mkdir(s_folder + "/obs_weights")
+if os.path.exists(s_folder + "/weights") != True:
+    os.mkdir(s_folder + "/weights")
 
 
 env = gym.make(exercise)
@@ -53,12 +55,12 @@ print(action_space)
 #and delta will eliminate things that are static.
 #while current obs will give more stronger signals for things
 #that are always the same
-net = NetworkObs(action_space, action_space, obs_space,obs, 1, "dObs", False)
+net = Network(action_space, action_space, obs_space,obs, 1, "dObs", True)
 
 b = '%d' % int(best.getBest())
 #b = "310"
 
-NetworkObs.loadWeightsFromDisk(exercise+ "/obs_weights/" + b)
+Network.loadWeightsFromDisk(exercise+ "/weights/" + b)
 
 env.reset()
 numMinutes = int(numMinutes)
@@ -102,7 +104,7 @@ def saveBestStuff():
     net.saveBest()
     best.save()
     b = '%d'%int(bestReward)
-    NetworkObs.saveWeightsToDisk(exercise+ "/obs_weights/" + b)
+    Network.saveWeightsToDisk(exercise+ "/weights/" + b)
     print("save best: ", bestReward)
 
 def resetLevel():
@@ -152,7 +154,7 @@ while True:
 print('bestscore :%d', bestReward)
 print('episodes :%d', episodes)
 
-NetworkObs.restoreBest()
+Network.restoreBest()
 b = '%d'%int(bestReward)
 
 _label0 = exercise #nice formating
@@ -161,6 +163,6 @@ plt.ylabel("Reward %")
 plt.plot(eps, scores, color='c', label=_label0)#plot graph (note won't work if also doing confusion matrix)
 plt.legend(loc="best")
 env.close()
-plt.savefig(s_folder + "/" + s, format='jpg')
+plt.savefig(s_folder + "/" + s_file, format='jpg')
 plt.figure()
 plt.show()

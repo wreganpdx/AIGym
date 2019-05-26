@@ -206,14 +206,14 @@ class NetworkObs(object):
 	    mod = f
 	    if perceptrons[i].fitness > avgFitness:
  		mod = mod * -1
+	    	    little = 1
+	    little = little - annealing
 	    mrRand = np.random.rand()
-	    if mrRand < perceptrons[i].fitness:
-	    	perceptrons[i].anealDelta(annealing, mod)
-	    else:
-		mrRand *= 2
+	    if mrRand > annealing:
+	        perceptrons[i].anealDelta(annealing, reward)
             for j in range(len(hiddenLayer)):
 	        if hiddenLayer[j].getClass() == i:
- 	            hiddenLayer[j].delta = (mrRand * avgObs * mod) 
+ 	            hiddenLayer[j].delta = (little * avgObs * mod) 
 
 
 

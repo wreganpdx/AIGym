@@ -102,7 +102,6 @@ class Network(object):
 	global gradientCount
 	global avgObs
     	space = np.random.rand()
-    	space = space * .6
     	discount = 1 - space
     	Network.zeroDelta()
     	Network.resetFitness()   
@@ -204,9 +203,9 @@ class Network(object):
 	    if perceptrons[i].fitness > avgFitness:
  		mod = mod * -1
 	    mrRand = np.random.rand()
-	    little = 1
-	    if mrRand < annealing:
-	    	little = little - annealing
+	    little = 1 - annealing
+	    if mrRand > annealing:
+		perceptrons[i].anealDelta(annealing, reward)
             for j in range(len(hiddenLayer)):
 	        if hiddenLayer[j].getClass() == i:
  	            hiddenLayer[j].delta = (avgObs * mod * little) 
