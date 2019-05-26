@@ -12,7 +12,7 @@ from Util import Util
 
 from Neuron import Neuron
 
-class Network(object):
+class NetworkObs(object):
     global perceptrons
     perceptrons = []
     global hiddenLayer
@@ -71,19 +71,19 @@ class Network(object):
 	    p.append(perceptrons[i].w)
 	for k in range(len(hiddenLayer)):
 	    h.append(hiddenLayer[k].w)
-	np.save(path + "perc", p)
-	np.save(path + "hid", h)
+	np.save(path + "ObsPerc", p)
+	np.save(path + "ObsHid", h)
 
     @staticmethod 
     def loadWeightsFromDisk(path):
 	global perceptrons
 	global hiddenLayer
 	print("checking for weights %s" % path)
-	if os.path.isfile(path + "perc.npy") != True:
+	if os.path.isfile(path + "ObsPerc.npy") != True:
 	    return
 	print("loading weights")
-	p = np.load(path + "perc.npy")
-	h = np.load(path + "hid.npy")
+	p = np.load(path + "ObsPerc.npy")
+	h = np.load(path + "ObsHid.npy")
 	for i in range(len(perceptrons)):
 	    perceptrons[i].w = p[i]
 	    perceptrons[i].zeroDelta()
@@ -104,8 +104,8 @@ class Network(object):
     	space = np.random.rand()
     	space = space * .6
     	discount = 1 - space
-    	Network.zeroDelta()
-    	Network.resetFitness()   
+    	NetworkObs.zeroDelta()
+    	NetworkObs.resetFitness()   
 	gradientCount = 0 
 	avgObs = avgObs * 0
 	g = '%.4f' %discount
@@ -116,7 +116,7 @@ class Network(object):
     def applyAnnealing(T, steps, rew, scores):
 	global gradientCount
 	if gradientCount > 5:
-	    Network.setGradient(T, steps, rew, scores)
+	    NetworkObs.setGradient(T, steps, rew, scores)
 	    return
         else:
 	    gradientCount += 1
@@ -125,9 +125,12 @@ class Network(object):
             rew = 1
         else:
             rew = -1
-
-        Network.retrain(rew,annealing)
-	Network.resetFitness()
+        rand = np.random.rand()
+        if rand > annealing:
+            NetworkObs.retrain(rew,annealing)
+        else:
+            NetworkObs.restoreBest()
+	NetworkObs.resetFitness()
 
     @staticmethod
     def localMax(scores):
@@ -204,12 +207,13 @@ class Network(object):
 	    if perceptrons[i].fitness > avgFitness:
  		mod = mod * -1
 	    mrRand = np.random.rand()
-	    little = 1
-	    if mrRand < annealing:
-	    	little = little - annealing
+	    if mrRand < perceptrons[i].fitness:
+	    	perceptrons[i].anealDelta(annealing, mod)
+	    else:
+		mrRand *= 2
             for j in range(len(hiddenLayer)):
 	        if hiddenLayer[j].getClass() == i:
- 	            hiddenLayer[j].delta = (avgObs * mod * little) 
+ 	            hiddenLayer[j].delta = (mrRand * avgObs * mod) 
 
 
 
@@ -234,16 +238,11 @@ class Network(object):
 	if allowRandom and not np.any(d):
  	    return rand
 	d = d.transpose()
-        for i in range(myRange):
-            result[i] = hiddenLayer[i].compute(d)
-	if metaLayers >= 2:
-	    o = obs.flatten().transpose()
-	    for i in range(myRange, myRange*2):
-                result[i] = hiddenLayer[i].compute(o)
-	if metaLayers >= 3:
-	    a = avgObs.flatten().transpose()
-	    for i in range(myRange*2, myRange*3):
-                result[i] = hiddenLayer[i].compute(a)
+
+
+    	o = obs.flatten().transpose()
+    	for i in range(0, myRange):
+            result[i] = hiddenLayer[i].compute(o)
 	lastObs = obs[:]
 
         scores = np.empty(len(classes))

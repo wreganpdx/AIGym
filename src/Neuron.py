@@ -21,8 +21,7 @@ class Neuron(object):
         self.seed = self.clas
 
         self.delta =  np.random.rand(weights)
-        self.delta -= 1.0
-        self.delta *= .1
+        self.delta *= 0
 
         self.fitness = 0
         self.rekick()

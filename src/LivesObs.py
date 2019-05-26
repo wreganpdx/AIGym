@@ -4,11 +4,11 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from DataInit import DataInit
-from Network import Network
+from NetworkObs import NetworkObs
 from HiddenNetwork import HiddenNetwork
 from SampleSpace import SampleSpace
 from gym_recording.wrappers import TraceRecordingWrapper
-from BestScores import BestScores
+from ObsBestScores import ObsBestScores
 
 
 
@@ -19,21 +19,19 @@ from gym import spaces
 
 exercise, numMinutes, render, printStuff, obsDefault = DataInit.getData()
 
-best = BestScores(exercise)
+best = ObsBestScores(exercise)
 
 
 
 s_folder = exercise
 t = time.time()
 s_file = str(t) + "chart"
-s_file_weights = str(t) + "weights"
-print(s_file)
-print(s_file_weights)
+t = time.time()
 if os.path.exists(s_folder) != True:
     os.mkdir(s_folder)
 
-if os.path.exists(s_folder + "/weights") != True:
-    os.mkdir(s_folder + "/weights")
+if os.path.exists(s_folder + "/obs_weights") != True:
+    os.mkdir(s_folder + "/obs_weights")
 
 
 env = gym.make(exercise)
@@ -55,12 +53,12 @@ print(action_space)
 #and delta will eliminate things that are static.
 #while current obs will give more stronger signals for things
 #that are always the same
-net = Network(action_space, action_space, obs_space,obs, 1, "dObs", False)
+net = NetworkObs(action_space, action_space, obs_space,obs, 1, "dObs", False)
 
 b = '%d' % int(best.getBest())
 #b = "310"
 
-Network.loadWeightsFromDisk(exercise+ "/weights/" + b)
+NetworkObs.loadWeightsFromDisk(exercise+ "/obs_weights/" + b)
 
 env.reset()
 numMinutes = int(numMinutes)
@@ -104,7 +102,7 @@ def saveBestStuff():
     net.saveBest()
     best.save()
     b = '%d'%int(bestReward)
-    Network.saveWeightsToDisk(exercise+ "/weights/" + b)
+    NetworkObs.saveWeightsToDisk(exercise+ "/obs_weights/" + b)
     print("save best: ", bestReward)
 
 def resetLevel():
@@ -154,7 +152,7 @@ while True:
 print('bestscore :%d', bestReward)
 print('episodes :%d', episodes)
 
-Network.restoreBest()
+NetworkObs.restoreBest()
 b = '%d'%int(bestReward)
 
 _label0 = exercise #nice formating

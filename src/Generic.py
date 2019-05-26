@@ -144,7 +144,7 @@ while True:
 	    print("rew : %d, bestReward: %d, curSteps:%d, best_survival%d"%(rew,bestReward,curSteps,bestSurvival))
             saveBestStuff()
         else:
-            net.applyAnnealing(T, duration, rew > lastReward)
+            net.applyAnnealing(T, duration, rew > lastReward, scores)
 	resetLevel()
 
     action = net.calculateObs(observation)
