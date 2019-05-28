@@ -16,7 +16,7 @@ class HiddenNetwork(object):
         self.seed = seed
         self.seedActual = seed
         print("Creating hidden neuron class: %d seed:"% seed)
-        np.random.seed(seed)  # place a random seed (actually it's just the index, but it works since each perceptron has its own index)
+        np.random.seed(seed)  
 
         self.rekick()
 	self.resetDelta()

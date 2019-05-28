@@ -12,11 +12,15 @@ class BestScores(object):
 	    self.best = []
 	    self.best.append(-500000)
 	for b in self.best:
-	    print("Best %d" %b)
+	    t = str(b)
+	    print("Best %s" %t)
         return None
 
     def getBest(self):
-	return np.max(self.best)
+	b = []
+	for s in self.best:
+	    b.append(float(s))
+	return np.max(b)
 
     def setBest(self, score):
 	self.best.append(score)
