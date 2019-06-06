@@ -4,20 +4,19 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from DataInit import DataInit
-from Network import Network
+from BiDirectionalFrameSearch import BiDirectionalFrameSearch
 from HiddenNetwork import HiddenNetwork
 from SampleSpace import SampleSpace
 from gym_recording.wrappers import TraceRecordingWrapper
-
 from BestScores import BestScores
 
 
 
 from gym import envs
+global env
 print(envs.registry.all())
 
 from gym import spaces
-
 
 exercise, numMinutes, render, printStuff, obsDefault = DataInit.getData()
 
@@ -57,14 +56,15 @@ print(action_space)
 #and delta will eliminate things that are static.
 #while current obs will give more stronger signals for things
 #that are always the same
-net = Network(action_space, action_space, obs_space,obs, 1, "dObs", True)
+net = BiDirectionalFrameSearch(action_space, action_space, obs_space,obs, 1, "dObs", True)
 
-b = '%.4f' % best.getBest()
-#b = "510"
-
-print(env.unwrapped.get_action_meanings())
-Network.loadWeightsFromDisk(exercise+ "/weights/" + b)
-
+b = '%.4f' % float(best.getBest())
+#b = "310"
+net.setPath(exercise + "/weights/")
+net.setScoreObj(best)
+net.loadWeightsFromDisk((exercise+ "/weights/" + b))
+net.setClassLabels(env.unwrapped.get_action_meanings())
+net.setScoreObj(best)
 env.reset()
 numMinutes = int(numMinutes)
 
@@ -76,7 +76,6 @@ global curSteps
 global lastReward
 global scores
 global bestSurvival
-global env
 bestSurvival = 0
 rew = 0
 steps = 1
@@ -86,6 +85,7 @@ best_survival = 0
 steps = 0
 curSteps = 0
 bestReward = best.getBest()
+
 eps = []
 scores = []
 duration = numMinutes
@@ -93,18 +93,12 @@ duration = duration * 60
 render_t = time.time()
 start = time.time()
 
-net.zeroDelta()
-
 lives = env.ale.lives()
 
-#lives = env.ale.lives()
+stale = 0
+lastScore = 5000
 
-env.close()
-env = gym.make(exercise)
-env.reset()
-env.seed(0)
-env.action_space.np_random.seed(0)
-action = env.action_space.sample()
+
 def resetLevel():
     global lastReward
     global curSteps
@@ -118,6 +112,7 @@ def resetLevel():
     env.reset()
     env.seed(0)
     env.action_space.np_random.seed(0)
+ 
     episodes += 1
     eps.append(episodes)
     scores.append(rew)
@@ -128,29 +123,36 @@ def resetLevel():
     rew = 0
     curSteps = 0
 
+env.close()
+env = gym.make(exercise)
+env.reset()
+env.seed(0)
+env.action_space.np_random.seed(0)
+action = env.action_space.sample()
 while True:
     steps += 1
     curSteps += 1
     t = time.time()
     T = t - start
-    
-    
     if T > duration:
 	print("Done - T Seconds %d", T)
 	break
     if render:
 	env.render()
-	
+
     observation, reward, done, info = env.step(action)
     if done != True and env.ale.lives() == lives:
+	if reward > 0:
+	    reward = 1
         rew += reward
     else:
+        net.applyAnnealing(T, duration, rew, scores)
 	resetLevel()
-    a = env.action_space.sample()
-    action = net.calculateObs(observation, a)
+    rand = env.action_space.sample()
+    action = net.calculateObs(observation, rand)
 
 #np.savetxt(s_folder + "/" + s_file, np.array([[1, 2], [3, 4]]), fmt="%s")
-print('bestscore :%d', bestReward)
+
 print('episodes :%d', episodes)
 
 

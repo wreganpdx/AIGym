@@ -4,11 +4,10 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from DataInit import DataInit
-from Network import Network
+from NetMachineDvt import NetMachineDvt
 from HiddenNetwork import HiddenNetwork
 from SampleSpace import SampleSpace
 from gym_recording.wrappers import TraceRecordingWrapper
-
 from BestScores import BestScores
 
 
@@ -17,8 +16,7 @@ from gym import envs
 print(envs.registry.all())
 
 from gym import spaces
-
-
+global env
 exercise, numMinutes, render, printStuff, obsDefault = DataInit.getData()
 
 best = BestScores(exercise)
@@ -57,14 +55,19 @@ print(action_space)
 #and delta will eliminate things that are static.
 #while current obs will give more stronger signals for things
 #that are always the same
-net = Network(action_space, action_space, obs_space,obs, 1, "dObs", True)
+net = NetMachineDvt(action_space, action_space, obs_space,obs, 1, "dObs", True)
+
+unwrapped = env.unwrapped
+if hasattr(unwrapped, 'get_action_meanings'):
+    net.setClassLabels(env.unwrapped.get_action_meanings())
+else: 
+    net.setClassLabels(np.arange(action_space).astype('S10'))
 
 b = '%.4f' % best.getBest()
-#b = "510"
-
-print(env.unwrapped.get_action_meanings())
-Network.loadWeightsFromDisk(exercise+ "/weights/" + b)
-
+#b = "310"
+net.loadWeightsFromDisk(exercise+ "/weights/" + b)
+net.setPath(exercise+ "/weights/")
+net.setScoreObj(best)
 env.reset()
 numMinutes = int(numMinutes)
 
@@ -76,7 +79,8 @@ global curSteps
 global lastReward
 global scores
 global bestSurvival
-global env
+global oldSeed
+oldSeed = time.time()
 bestSurvival = 0
 rew = 0
 steps = 1
@@ -85,7 +89,6 @@ lastReward = 0
 best_survival = 0
 steps = 0
 curSteps = 0
-bestReward = best.getBest()
 eps = []
 scores = []
 duration = numMinutes
@@ -93,31 +96,34 @@ duration = duration * 60
 render_t = time.time()
 start = time.time()
 
-net.zeroDelta()
-
-lives = env.ale.lives()
-
-#lives = env.ale.lives()
-
-env.close()
-env = gym.make(exercise)
-env.reset()
-env.seed(0)
-env.action_space.np_random.seed(0)
-action = env.action_space.sample()
-def resetLevel():
+if hasattr(env, 'ale'):
+    lives = env.ale.lives()
+else:
+    lives = 0
+def resetLevel(finishedSim, newSeed):
     global lastReward
     global curSteps
     global episodes
     global scores
     global rew
     global env
+    global oldSeed
     lastReward = rew
-    env.close()
-    env = gym.make(exercise)
-    env.reset()
-    env.seed(0)
-    env.action_space.np_random.seed(0)
+    if newSeed:
+	newSeed = time.time()
+	oldSeed = newSeed
+    else:
+	newSeed = oldSeed
+    
+    if finishedSim:
+        env.close()
+        env = gym.make(exercise)
+        env.reset()
+        env.seed(newSeed)
+        env.action_space.np_random.seed(newSeed)
+    else:
+	env.reset()
+ 
     episodes += 1
     eps.append(episodes)
     scores.append(rew)
@@ -133,31 +139,32 @@ while True:
     curSteps += 1
     t = time.time()
     T = t - start
-    
-    
     if T > duration:
 	print("Done - T Seconds %d", T)
 	break
     if render:
 	env.render()
-	
+    if hasattr(env, 'ale'):
+        curLives = env.ale.lives()
+    else:
+        curLives = 0
     observation, reward, done, info = env.step(action)
-    if done != True and env.ale.lives() == lives:
+    if done != True and curLives == lives:
         rew += reward
     else:
-	resetLevel()
-    a = env.action_space.sample()
-    action = net.calculateObs(observation, a)
+        finishedSim, newSeed = net.applyAnnealing(T, duration, rew, scores)
+	resetLevel(finishedSim, newSeed)
+    rand = env.action_space.sample()
+    action = net.calculateObs(observation, rand)
 
 #np.savetxt(s_folder + "/" + s_file, np.array([[1, 2], [3, 4]]), fmt="%s")
-print('bestscore :%d', bestReward)
+print('bestscore :%d', np.max(scores))
 print('episodes :%d', episodes)
 
 
-_label0 = exercise #nice formating
 plt.xlabel("Episodes")
 plt.ylabel("Reward %")
-plt.plot(eps, scores, color='c', label=_label0)#plot graph (note won't work if also doing confusion matrix)
+plt.plot(eps, scores, color='c', label=exercise)
 plt.legend(loc="best")
 env.close()
 plt.savefig(s_folder + "/" + s_file, format='jpg')

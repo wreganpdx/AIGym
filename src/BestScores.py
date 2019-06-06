@@ -10,7 +10,7 @@ class BestScores(object):
 	    self.best = best
 	else:
 	    self.best = []
-	    self.best.append(-500000)
+	    self.best.append(0)
 	for b in self.best:
 	    t = str(b)
 	    print("Best %s" %t)
@@ -24,6 +24,17 @@ class BestScores(object):
 
     def setBest(self, score):
 	self.best.append(score)
+
+    def confirmBest(self, score):
+	changed = False
+	argmax = np.argmax(self.best)
+	while score < self.best[argmax]:
+	    self.best[argmax] = score
+	    argmax = np.argmax(self.best)
+	    changed = True
+	if changed:
+	    self.save()
+	
 
     def save(self):
 	np.save(self.path, np.array(self.best))

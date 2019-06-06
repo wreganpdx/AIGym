@@ -15,7 +15,7 @@ import sklearn
 from sklearn.cluster import KMeans
 from BestScores import BestScores
 
-class NetworkVision(object):
+class NetworkCluster(object):
     global perceptrons
     perceptrons = []
     global hiddenLayer
@@ -46,12 +46,12 @@ class NetworkVision(object):
     deathRange = 32
     global alreadyMutated
     alreadyMutated = {}
-    global deaths 
-    deaths =  []
+    global death 
+    death =  []
     global scoresThisRound
     scoresThisRound = []
     global roundMax
-    roundMax = 15
+    roundMax = 500
     global bestScore
     bestScore = ""
     global bestMutation
@@ -64,16 +64,26 @@ class NetworkVision(object):
     GradientState = 0
     global TestState
     TestState = 1
-    global maxPopulation
-    maxPopulation = 8
     global path
     path = ""
-    global playoffs
-    playoffs = []
-    global currentTuple
-    currentTuple = (0,1,0)
     global bestAvg
     bestAvg = 0
+    global bestDeltas
+    bestDeltas = []
+    global deltaGradients
+    deltaGradients = []
+    global currentClass
+    currentClass = 0
+    global currentDeath 
+    currentDeath = 0
+    global deathOccurances
+    deathOcccurances = 0
+    global orgDeathOccurances
+    orgDeathOccurances = 0 
+    global kmeans
+    global classLabels
+    global lastResult
+    global deathDelta
     def __init__(self, _nodes, _classes, weights, obs, _metaLayers, trace, _Random):
         global perceptrons
         perceptrons = []
@@ -106,12 +116,12 @@ class NetworkVision(object):
 	classCodes = []
         global alreadyMutated
         alreadyMutated = {}
-	global deaths 
-	deaths = []
+	global death 
+	death = []
 	global scoresThisRound
 	scoresThisRound = []
 	global roundMax
-	roundMax = 15
+	roundMax = 500
 	global bestScore
 	bestScore = 0
         global bestMutation
@@ -124,17 +134,26 @@ class NetworkVision(object):
 	GradientState = 0
 	global TestState
 	TestState = 1
-	global maxPopulation
-	maxPopulation = 15
 	global path
 	path = ""
-        global playoffs
-        playoffs = []
-	global currentTuple 
-        currentTuple = (0,1,0)
     	global bestAvg
     	bestAvg = 0
-	_nodes = _nodes * _metaLayers
+	global bestDeltas
+	bestDeltas = []
+	global deltaGradients
+	deltaGradients = []
+    	global currentClass
+    	currentClass = 0
+	global currentDeath
+	currentDeath = 0
+        global deathOccurances
+        deathOccurances = 0
+   	global orgDeathOccurances
+   	orgDeathOccurances = 0 
+	global lastResult 
+	global deathDelta
+	deathDelta = np.empty(weights)
+	lastResult = np.empty(weights)
         for k in range(len(classes)):
             p = Neuron(classes[k], classes[k], _nodes)
             perceptrons.append(p)
@@ -142,7 +161,8 @@ class NetworkVision(object):
         for i in range(_nodes):
             h = HiddenNetwork(i * 1000 + i, i %len(classes), weights)
             hiddenLayer.append(h)
-	classCodes = NetworkVision.defineBrand()
+	classCodes = NetworkCluster.defineBrand()
+	
 
     @staticmethod
     def defineBrand():
@@ -164,70 +184,68 @@ class NetworkVision(object):
 	return codes
 
     @staticmethod  
-    def matchPair():
+    def getCurrent():
 	global classCodes
 	global alreadyMutated
 	global currentMutation
-	np.random.shuffle(classCodes)
-	for i in range(len(classCodes)):
-	    np.random.shuffle(classCodes[i])
-	for i in range(len(classCodes)):
-	    for k in range(len(classCodes[i])):
-	    	str1 = "%d"%classCodes[i][k]
-		for x in range(len(classCodes)):
-		    if x == i:
-			continue
-		    for y in range(len(classCodes[x])):
-			
-			str2 = "%d"%classCodes[x][y]
-			pair = str1 + "_" + str2
+	global currentClass	
+	global currentDeath
+        ret = currentClass
+	ret += 10 * currentDeath
+	rand = np.random.rand()
+	if rand > .5:
+	    ret += 100
+	currentMutation = "%d" % ret
+	return currentMutation
 
-			if pair in alreadyMutated:
-			    continue
-
-			pair = str2 + "_" + str1
-			if pair in alreadyMutated:
-			    continue
-
-			if NetworkVision.deathsEqual(str1, str2):
-			    continue
-			
-			alreadyMutated[pair] = 0
-			currentMutation = pair
-			return (str1, str2)
-
-    @staticmethod
-    def deathsEqual(str1, str2):
-	int1 = int(str1)
-	int2 = int(str2)
-	d1 = int(int1 / 10)
-	d2 = int(int2 / 10)
-	return d1 == d2
-
-    @staticmethod
-    def trainPair(str1, str2):
-	NetworkVision.trainOne(str1)
-	#NetworkVision.trainOne(str2)
 
     @staticmethod
     def trainOne(str1):
 	global classes
-	global deaths
+	global death
+	global perceptrons
+	global hiddenLayer
 	int1 = int(str1)
+	c1 = int1 % 10
+	d1 = ((int1 % 100) - c1) /10
+
+	p1 = 1
+        perceptrons[c1].anealDelta(1, p1)
+	for j in range(len(hiddenLayer)):
+            if hiddenLayer[j].getClass() == c1:
+    	        hiddenLayer[j].delta = (death * p1)  
+  
+    @staticmethod
+    def trainClassifier():
+	global currentClass
+	global deathDelta
+	global perceptrons
+	perceptrons[currentClass].delta = deathDelta * .1
+    
+    @staticmethod
+    def gradientDelta():
+	global currentMutation
+	global classLabels
+	global currentClass
+	int1 = int(currentMutation)
 	c1 = int1 % 10
 	d1 = ((int1 % 100) - c1) /10
 
 	p1 = int(int1 /100)
 	if p1 == 0:
 	    p1 = -1
-
-
-        perceptrons[c1].anealDelta(1, p1)
+	
+	global deathOccurances
+	global orgDeathOccurances
+	gradient = float(orgDeathOccurances - deathOccurances) /float(orgDeathOccurances)
+	gradient_s = '%.4f' % gradient
+	print("Training Class: %s, old Deaths: %d, new Deaths: %d, gradient: %s)"%(classLabels[currentClass], orgDeathOccurances, deathOccurances, gradient_s))
+	
+	perceptrons[c1].delta = perceptrons[c1].delta * gradient
 	for j in range(len(hiddenLayer)):
             if hiddenLayer[j].getClass() == c1:
-    	        hiddenLayer[j].delta = (deaths[d1] * p1)  
+    	        hiddenLayer[j].delta = hiddenLayer[j].delta * gradient
 	
-		
     @staticmethod 
     def setPath(_path):
     	global path
@@ -261,6 +279,7 @@ class NetworkVision(object):
 	np.save(path+avg_s + "hid", h)
 	scoreObj.setBest(avg_s)
 	scoreObj.save()
+	print("Saving Weights to disk " + path + avg_s)
 	
 
     @staticmethod 
@@ -278,24 +297,27 @@ class NetworkVision(object):
 	np.save(path + "dt_hid", h)
 
     @staticmethod 
-    def loadBestMutationDelta():
+    def loadBestMutationDelta(omit):
 	global path
 	global perceptrons
 	global hiddenLayer
-	print("checking for weights %s" % path)
+	print("checking Mutation weights: %s omiting: %d" % (path, omit))
 	if os.path.isfile(path + "dt_perc.npy") != True:
 	    return
 	print("loading weights")
 	p = np.load(path + "dt_perc.npy")
 	h = np.load(path + "dt_hid.npy")
 	for i in range(len(perceptrons)):
+	    if i == omit:
+		continue;
 	    perceptrons[i].delta = p[i]
 	a1 = len(hiddenLayer)
 	a2 = len(h)
 	r = min(a1, a2)
 	for k in range(r):
+	    if k == omit:
+		continue;
 	    hiddenLayer[k].delta = h[k]
-	NetworkVision.saveBest()
 
     @staticmethod 
     def loadWeightsFromDisk(_path):
@@ -339,59 +361,91 @@ class NetworkVision(object):
 	global TestState
 	global currentMutation
 	global alreadyMutated
-	global maxPopulation
 	global scoresThisRound
 	global currentTuple
 	finishedTest = False
 	finishedGradient = False
 	if state == TestState:
-	    finishedTest = NetworkVision.testState(T,steps,rew,scores)
+	    finishedTest = NetworkCluster.testState(T,steps,rew,scores)
 	    #print("Test: %d" % len(scoresThisRound))
 	else:	
-	    NetworkVision.zeroDelta()
-	    finishedGradient = NetworkVision.gradientState(T,steps,rew,scores)
+	    NetworkCluster.zeroDelta()
+	    finishedGradient = NetworkCluster.gradientState(T,steps,rew,scores)
 	
 	if finishedTest:
-	    if len(alreadyMutated) < maxPopulation:
-		NetworkVision.zeroDelta()
-	    	mut1, mut2 = NetworkVision.matchPair()
-	    	NetworkVision.trainPair(mut1,mut2)
-	    else:
-		NetworkVision.completeTraining()
-		NetworkVision.resetVision()
+            NetworkCluster.completeTraining()
+            NetworkCluster.zeroDelta()
+	    mut1 = NetworkCluster.getCurrent()
+	    NetworkCluster.trainOne(mut1)
 	    scoresThisRound = []
 	if finishedGradient:
-	    NetworkVision.clusterdeaths()
-	    NetworkVision.zeroDelta()
-	    mut1, mut2 = NetworkVision.matchPair()
-	    NetworkVision.trainPair(mut1,mut2)
+	    NetworkCluster.clusterdeaths()
+	    NetworkCluster.zeroDelta()
+	    NetworkCluster.saveBestMutationDelta()
+	    mut1 = NetworkCluster.getCurrent()
+	    NetworkCluster.trainOne(mut1)
 		
 	return
-
     @staticmethod
-    def resetVision():
-	global deaths
+    def resetForClass():
 	global Frames
 	global alreadyMutated
 	global deathFrames
 	global bestScore
 	global bestAvg
-	alreadyMutated = {}
+	global bestMutation
+	global currentMutation
+	global deathOccurances
 	Frames = []
-	deaths = []
 	deathFrames = []
 	bestScore = 0
 	bestAvg = 0
 	bestMutation = ""
 	currentMutation = ""
-	state = TestState
+	deathOccurances = 0
+
+    @staticmethod
+    def resetVision():
+
+	global alreadyMutated
+	alreadyMutated = {}
+	global Frames
+	Frames = []
+	global deathFrames
+	deathFrames = []
+	global bestScore
+	bestScore = 0
+	global bestAvg
+	bestAvg = 0
+	global bestMutation
+	bestMutation = ""
+	global currentMutation
+	currentMutation = ""
+	global currentClass
+	currentClass = 0
+	global deathOccurances
+	deathOccurances = 0
 
     @staticmethod
     def completeTraining():
 	global state
 	global GradientState
-	NetworkVision.loadBestMutationDelta()
-	state = GradientState
+	global currentClass
+	global classes
+	NetworkCluster.loadBestMutationDelta(currentClass)
+	NetworkCluster.gradientDelta()
+	if currentClass == len(classes)-1:
+	    print("currentClass: %d" % currentClass)
+	    NetworkCluster.saveBest()
+	    state = GradientState
+	    NetworkCluster.resetVision()
+	    NetworkCluster.zeroDelta()
+	    NetworkCluster.saveBestMutationDelta()
+
+	else:
+	    print("currentClass: %d" % currentClass)
+	    currentClass += 1
+	    NetworkCluster.resetForClass()
 
     @staticmethod
     def testState(T, steps, rew, scores):
@@ -400,21 +454,32 @@ class NetworkVision(object):
 	global bestScore
 	global bestMutation
 	global currentMutation
-	global state
-	global gradientState
 	global bestAvg
+	global currentDeath
+	global kmeans
+	global deathFrames
+	global deathOccurances
+	global deathDelta
+	global lastResult
+	NetworkCluster.createDeathFrame()
 	scoresThisRound.append(rew)
+	_death = []
+	_death.append(deathFrames[len(deathFrames)-1].flatten())
+	d = kmeans.predict(_death)
+	d = d[0]
+	if d == currentDeath:
+	    deathOccurances += 1
+	    deathDelta = lastResult[:]
+	    NetworkCluster.trainClassifier()
 	if len(scoresThisRound) >= roundMax:
+
             success = float(np.count_nonzero(scoresThisRound))/float(len(scoresThisRound))
-	    if success == 1:
-		success = np.min(scoresThisRound)
 	    avg = np.average(scoresThisRound)
 	    print(scoresThisRound)
 	    if success > bestScore or (success == bestScore and bestAvg < avg):
 		bestScore = success
 		bestAvg = avg    
 		bestMutation = currentMutation	
-		NetworkVision.saveBestMutationDelta()
 	    avg_s = '%.4f' % avg
             success_s = '%.4f' % success
 	    print("Current Mutation: %s, avg: %s, reward: %s" % (currentMutation, avg_s,success_s))
@@ -426,8 +491,8 @@ class NetworkVision(object):
 	global deathFrames
 	global TestState
 	global state
-        NetworkVision.createDeathFrame()
-	NetworkVision.setGradient()
+        NetworkCluster.createDeathFrame()
+	NetworkCluster.setGradient()
 	if len(deathFrames) >= roundMax:
 	   state = TestState
 	   return True
@@ -441,21 +506,34 @@ class NetworkVision(object):
     def clusterdeaths():
 	global deathFrames
 	global classes
-	global deaths
+	global death
+	global kmeans
+	global orgDeathOccurances
+	global currentDeath
 	_deaths = []
+	frequencies = np.zeros(len(classes))
 	for i in range(len(deathFrames)):
 	    _deaths.append(deathFrames[i].flatten())
 	shape = deathFrames[0].shape
+	deathFrames = []
 	kmeans = KMeans(n_clusters=len(classes)).fit(_deaths)
+  
+	predictions = kmeans.predict(_deaths)
+	for i in range(len(predictions)):
+	    frequencies[predictions[i]] = frequencies[predictions[i]] + 1
+    #frequencies[index] = frequencies[index] + 1
 	centroids = []
 	for i in range(len(kmeans.cluster_centers_)):
 	    centroids.append(np.reshape(kmeans.cluster_centers_[i], shape))
 	print("Death Clusters Created")
+	
+	orgDeathOccurances = np.max(frequencies)
+	currentDeath = np.argmax(frequencies)
 	#for i in range(len(centroids)):
 	 #   plt.imshow(centroids[i])
 	  #  plt.figure()
 	   # plt.show()
-	deaths = np.array(centroids, copy=True)
+	death = np.array(centroids[currentDeath], copy=True)
 
     @staticmethod
     def restoreBest():
@@ -489,7 +567,7 @@ class NetworkVision(object):
             hiddenLayer[j].copyWeights()
 
         print("*"),
-	NetworkVision.saveWeightsToDisk()
+	NetworkCluster.saveWeightsToDisk()
 
 
     @staticmethod
@@ -520,16 +598,16 @@ class NetworkVision(object):
 	global state
 	global GradientState
 	global TestState
+	global lastResult
 	unique = np.unique(obs)
 	originalDelta = obs - lastObs
 	deltaObs = originalDelta[:]
-	if state == GradientState:
-	    deltaObs = np.abs(deltaObs)
-	    Frames.append(avgObs[:])
-            if len(Frames) >= discount:
-		Frames.pop(0)
-		    
-	    avgObs = avgObs * .8 + deltaObs * .2 
+    	deltaObs = np.abs(deltaObs)
+    	Frames.append(avgObs[:])
+    	if len(Frames) >= discount:
+	    Frames.pop(0)
+	    
+    	avgObs = avgObs * .8 + deltaObs * .2 
 		
 	    
         result = np.empty(len(hiddenLayer))
@@ -553,7 +631,7 @@ class NetworkVision(object):
             if score > bestScore:
                 bestScore = score
                 bestIndex = i
-
+	lastResult = result[:]
         perceptrons[bestIndex].fitness += 1
         return bestIndex
 
@@ -567,4 +645,10 @@ class NetworkVision(object):
     @staticmethod
     def numNeurons():
         return len(perceptrons)
+
+
+    @staticmethod
+    def setClassLabels(labels):
+	global classLabels
+	classLabels = labels
 

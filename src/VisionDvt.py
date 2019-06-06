@@ -4,11 +4,10 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from DataInit import DataInit
-from Network import Network
+from NetworkDvt import NetworkDvt
 from HiddenNetwork import HiddenNetwork
 from SampleSpace import SampleSpace
 from gym_recording.wrappers import TraceRecordingWrapper
-
 from BestScores import BestScores
 
 
@@ -17,7 +16,6 @@ from gym import envs
 print(envs.registry.all())
 
 from gym import spaces
-
 
 exercise, numMinutes, render, printStuff, obsDefault = DataInit.getData()
 
@@ -57,14 +55,13 @@ print(action_space)
 #and delta will eliminate things that are static.
 #while current obs will give more stronger signals for things
 #that are always the same
-net = Network(action_space, action_space, obs_space,obs, 1, "dObs", True)
-
+net = NetworkDvt(action_space, action_space, obs_space,obs, 1, "dObs", True)
+NetworkDvt.setClassLabels(env.unwrapped.get_action_meanings())
 b = '%.4f' % best.getBest()
-#b = "510"
-
-print(env.unwrapped.get_action_meanings())
-Network.loadWeightsFromDisk(exercise+ "/weights/" + b)
-
+#b = "310"
+NetworkDvt.loadWeightsFromDisk(exercise+ "/weights/" + b)
+NetworkDvt.setPath(exercise+ "/weights/")
+NetworkDvt.setScoreObj(best)
 env.reset()
 numMinutes = int(numMinutes)
 
@@ -76,7 +73,6 @@ global curSteps
 global lastReward
 global scores
 global bestSurvival
-global env
 bestSurvival = 0
 rew = 0
 steps = 1
@@ -85,7 +81,6 @@ lastReward = 0
 best_survival = 0
 steps = 0
 curSteps = 0
-bestReward = best.getBest()
 eps = []
 scores = []
 duration = numMinutes
@@ -93,31 +88,17 @@ duration = duration * 60
 render_t = time.time()
 start = time.time()
 
-net.zeroDelta()
-
 lives = env.ale.lives()
 
-#lives = env.ale.lives()
-
-env.close()
-env = gym.make(exercise)
-env.reset()
-env.seed(0)
-env.action_space.np_random.seed(0)
-action = env.action_space.sample()
 def resetLevel():
     global lastReward
     global curSteps
     global episodes
     global scores
     global rew
-    global env
     lastReward = rew
-    env.close()
-    env = gym.make(exercise)
     env.reset()
-    env.seed(0)
-    env.action_space.np_random.seed(0)
+ 
     episodes += 1
     eps.append(episodes)
     scores.append(rew)
@@ -133,31 +114,29 @@ while True:
     curSteps += 1
     t = time.time()
     T = t - start
-    
-    
     if T > duration:
 	print("Done - T Seconds %d", T)
 	break
     if render:
 	env.render()
-	
+
     observation, reward, done, info = env.step(action)
     if done != True and env.ale.lives() == lives:
         rew += reward
     else:
+        net.applyAnnealing(T, duration, rew, scores)
 	resetLevel()
-    a = env.action_space.sample()
-    action = net.calculateObs(observation, a)
+    rand = env.action_space.sample()
+    action = net.calculateObs(observation, rand)
 
 #np.savetxt(s_folder + "/" + s_file, np.array([[1, 2], [3, 4]]), fmt="%s")
-print('bestscore :%d', bestReward)
+print('bestscore :%d', np.max(scores))
 print('episodes :%d', episodes)
 
 
-_label0 = exercise #nice formating
 plt.xlabel("Episodes")
 plt.ylabel("Reward %")
-plt.plot(eps, scores, color='c', label=_label0)#plot graph (note won't work if also doing confusion matrix)
+plt.plot(eps, scores, color='c', label=exercise)
 plt.legend(loc="best")
 env.close()
 plt.savefig(s_folder + "/" + s_file, format='jpg')

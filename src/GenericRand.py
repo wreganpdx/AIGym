@@ -8,7 +8,6 @@ from Network import Network
 from HiddenNetwork import HiddenNetwork
 from SampleSpace import SampleSpace
 from gym_recording.wrappers import TraceRecordingWrapper
-
 from BestScores import BestScores
 
 
@@ -17,7 +16,6 @@ from gym import envs
 print(envs.registry.all())
 
 from gym import spaces
-
 
 exercise, numMinutes, render, printStuff, obsDefault = DataInit.getData()
 
@@ -57,12 +55,11 @@ print(action_space)
 #and delta will eliminate things that are static.
 #while current obs will give more stronger signals for things
 #that are always the same
-net = Network(action_space, action_space, obs_space,obs, 1, "dObs", True)
+net = Network(action_space, action_space, obs_space,obs, 1, "dObs")
 
-b = '%.4f' % best.getBest()
-#b = "510"
+b = '%d' % int(best.getBest())
+#b = "840"
 
-print(env.unwrapped.get_action_meanings())
 Network.loadWeightsFromDisk(exercise+ "/weights/" + b)
 
 env.reset()
@@ -76,7 +73,6 @@ global curSteps
 global lastReward
 global scores
 global bestSurvival
-global env
 bestSurvival = 0
 rew = 0
 steps = 1
@@ -93,31 +89,32 @@ duration = duration * 60
 render_t = time.time()
 start = time.time()
 
-net.zeroDelta()
-
-lives = env.ale.lives()
-
 #lives = env.ale.lives()
 
-env.close()
-env = gym.make(exercise)
-env.reset()
-env.seed(0)
-env.action_space.np_random.seed(0)
-action = env.action_space.sample()
+def saveBestStuff():
+    global rew
+    global episodes
+    global steps
+    global bestReward
+    global bestSurvival
+    bestReward = rew
+    best.setBest(bestReward)
+    bestSurvival = curSteps
+    net.saveBest()
+    best.save()
+    b = '%d'%int(bestReward)
+    Network.saveWeightsToDisk(exercise+ "/weights/" + b)
+    print("save best: ", bestReward)
+
 def resetLevel():
     global lastReward
     global curSteps
     global episodes
     global scores
     global rew
-    global env
     lastReward = rew
-    env.close()
-    env = gym.make(exercise)
     env.reset()
-    env.seed(0)
-    env.action_space.np_random.seed(0)
+ 
     episodes += 1
     eps.append(episodes)
     scores.append(rew)
@@ -133,26 +130,32 @@ while True:
     curSteps += 1
     t = time.time()
     T = t - start
-    
-    
     if T > duration:
 	print("Done - T Seconds %d", T)
 	break
     if render:
 	env.render()
-	
+
     observation, reward, done, info = env.step(action)
-    if done != True and env.ale.lives() == lives:
+    if done != True:
         rew += reward
     else:
+        if rew > bestReward or (rew == bestReward and curSteps > bestSurvival):
+	    print("rew : %d, bestReward: %d, curSteps:%d, best_survival%d"%(rew,bestReward,curSteps,bestSurvival))
+            saveBestStuff()
+        else:
+            net.applyAnnealing(T, duration, rew > lastReward, scores)
 	resetLevel()
-    a = env.action_space.sample()
-    action = net.calculateObs(observation, a)
+
+    action = net.calculateObs(observation)
 
 #np.savetxt(s_folder + "/" + s_file, np.array([[1, 2], [3, 4]]), fmt="%s")
 print('bestscore :%d', bestReward)
 print('episodes :%d', episodes)
 
+best.save()
+Network.restoreBest()
+b = '%d'%int(bestReward)
 
 _label0 = exercise #nice formating
 plt.xlabel("Episodes")
