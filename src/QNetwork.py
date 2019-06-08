@@ -83,7 +83,12 @@ class QNetwork(object):
         testScores = []
         lastReward = originalBestScore
         actions.append(0)
-        Frames.append(np.zeros((stackSize, weights), dtype='f').flatten())
+        weights = np.zeros(weights)
+        weights = len(weights)
+        print(stackSize)
+        f = np.zeros((stackSize, weights), dtype='f')
+        print(f)
+        Frames.append(f.flatten())
         states.append(0)
 
     @staticmethod
@@ -192,22 +197,16 @@ class QNetwork(object):
         global epsilon
         if useDiff:
             diffFrame = obs - obsStack[len(obsStack)-1]
-        else:
-            diffFrame = obsStack[len(obsStack)-1]
         lastFrame = obs[:]
 
-        obsStack.insert(0,lastFrame[:])
-        if len(obsStack) > 4:
-            obsStack.pop()
+        obsStack.append(lastFrame[:])
+        if len(obsStack) > stackSize:
+            obsStack.pop(0)
            # print (obsStack)
-        newFrame = np.zeros((stackSize,weights), dtype='f')
+        newFrame = obsStack[:]
+        if useDiff:
+            newFrame[0] = diffFrame
 
-        newFrame[0] = np.asarray(lastFrame)
-        if stackSize > 1:
-            newFrame[1] = np.asarray(diffFrame)
-        if stackSize > 2:
-            for i in range(2, stackSize):
-                newFrame[i] = np.asarray(obsStack[i])
 
         newFrame = np.asarray(newFrame).flatten()
         lastAction = 0

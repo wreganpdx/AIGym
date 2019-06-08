@@ -71,14 +71,19 @@ class q_learn(object):
         global createdKmeans
         assert createdKmeans != True
         z = np.asarray(states[0]).flatten()
-        n = np.empty((len(states), len(z)))
+        length = len(states)
+        if length < clusters:
+            length = clusters
+
+        n = np.zeros((length, len(z)))
         for i in range(len(states)):
             n[i] = states[i].flatten()
         newKmeans = KMeans(n_clusters=clusters).fit(n)
         stuff = newKmeans.predict(n)
         clusterNum = np.zeros((clusters, actions))
         for i in range(len(stuff)):
-
+            if i >= len(_rewards):
+                break
             cluster_action_values[stuff[i]][_actions[i]] += _rewards[i]
             clusterNum[stuff[i]][_actions[i]] += 1
         for i in range(clusters):
@@ -99,7 +104,12 @@ class q_learn(object):
         global oldKmeans
         oldKmeans = newKmeans
         z = np.asarray(states[0]).flatten()
-        n = np.empty((len(states), len(z)))
+        for i in range(len(newKmeans.cluster_centers_)):
+            states.append(newKmeans.cluster_centers_[i])
+        length = len(states)
+        if length < clusters:
+            length = clusters
+        n = np.zeros((length, len(z)))
         for i in range(len(states)):
             n[i] = states[i].flatten()
         newKmeans = KMeans(n_clusters=clusters).fit(n)

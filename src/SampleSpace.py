@@ -17,7 +17,7 @@ class SampleSpace(object):
         actions = np.unique(actions)
 
         a = env.action_space.sample()
-	print(actions)
+        print(actions)
         observation, reward, done, info = env.step(actions[0])
 
         return (observation.shape, len(actions))

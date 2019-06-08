@@ -18,7 +18,7 @@ from gym import envs
 #print(envs.registry.all())
 
 from gym import spaces
-exercise, numMinutes, do_render, stacks, diff, clusters, test, discrete, elitism, epsilon  = DataInit.getData()
+exercise, numMinutes, do_render, stacks, diff, clusters, test, discrete, elitism, epsilon  = DataInitQ.getData()
 print("Exercise: %s"% exercise)
 print("Minutes: %s"% numMinutes)
 print("Render: %r"% do_render)
@@ -27,10 +27,12 @@ print("Use Observation Difference: %r"%diff)
 print("Number of clusters: %d"% clusters)
 env = gym.make(exercise)
 env.reset()
-obs_space, action_space= SampleSpace.sampleSpace(env)
+obs_space, action_space = SampleSpace.sampleSpace(env)
 
-
+print("Action space: "),
 print(action_space)
+print("Observation space: "),
+print(obs_space)
 net = QNetwork(clusters, action_space, obs_space, stacks, diff, test, discrete, elitism, epsilon)
 numMinutes = int(numMinutes)
 duration = numMinutes

@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 # count the arguments
-class DataInit(object):
+class DataInitQ(object):
 
     def __init__(self):
         return None
