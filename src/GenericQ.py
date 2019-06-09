@@ -83,12 +83,25 @@ while True:
         #action = env.action_space.sample()
 
 
+s = []
+e = []
+length = len(eps)/100
+for i in range(100):
+    start = i * length
+    end = (i+1) * length
+    if end >= len(eps):
+        end = len(eps)-1
+    e.append(end)
+    s.append(np.average(scores[i*length:(i+1)*length]))
+
+
+
 print('bestscore :%d', bestReward)
 print('episodes :%d', episodes)
 _label0 = exercise #nice formating
 plt.xlabel("Episodes")
 plt.ylabel("Reward %")
-plt.plot(eps, scores, color='c', label=_label0)#plot graph (note won't work if also doing confusion matrix)
+plt.plot(e, s, color='c', label=_label0)#plot graph (note won't work if also doing confusion matrix)
 plt.legend(loc="best")
 env.close()
 plt.figure()
