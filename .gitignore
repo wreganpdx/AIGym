@@ -2,11 +2,16 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.exe
+*.bat
+
 
 # C extensions
 *.so
 
 # Distribution / packaging
+*.xml
+*.iml
 .Python
 build/
 develop-eggs/
@@ -14,12 +19,14 @@ dist/
 downloads/
 eggs/
 .eggs/
+.idea/
 lib/
 lib64/
 parts/
 sdist/
 var/
 wheels/
+Scripts/
 *.egg-info/
 .installed.cfg
 *.egg
