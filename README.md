@@ -1,7 +1,8 @@
 # AIGym
 Gym stuff
 
-Most of these files are for seperate applications. I'll try and enumerate here what files go together.
+Most of these files are for seperate applications, so here's some idea of how it should be organized.
+
 
 ## Bidirectional Search
 
