@@ -42,4 +42,24 @@ q_learn.py
 GenericQ.py  
 SampleSpace.py  
 
+## Other Applications:
+Most of these applications were created as one offs to try
+new ideas, and were not tested, and may not work properly.  
+
+Show.py  
+ShowRandom.py  
+Lives.py  
+LivesObs.py  
+LivesRandom.py  
+LivesRandom2.py  
+LivesRandomFastVision.py  
+LivesRandomFast.py  
+Survival.py  
+SurvivalS.py  
+Vision.py  
+VisionCluster.py  
+VisionDvt.py  
+VisionMachine.py  
+
+
 
