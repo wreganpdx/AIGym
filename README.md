@@ -3,6 +3,9 @@ Gym stuff
 
 Most of these files are for seperate applications, so here's some idea of how it should be organized.
 
+Todo: Create file structure to seperate applications and another file structure for 
+classes that are shared across applications
+
 
 ## Bidirectional Search
 
