@@ -31,4 +31,11 @@ BestScores.py
 NetworkCluster.py  
 VisionCluster.py  
 
+## Clustering and QLearning
+DataInitQ.py  
+QNetwork.py  
+q_learn.py  
+GenericQ.py  
+SampleSpace.py  
+
 
