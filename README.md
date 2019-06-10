@@ -44,7 +44,8 @@ SampleSpace.py
 
 ## Other Applications:
 Most of these applications were created as one offs to try
-new ideas, and were not tested, and may not work properly.  
+new ideas, and were not tested, and may not work properly. They will generally
+run using python <file.py> <gym exercise> <minutes> <1 or 0: optional render, default 1> <1 or 0: opyional robust printing scores: default 1>
 
 Show.py  
 ShowRandom.py  
