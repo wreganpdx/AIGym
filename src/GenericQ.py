@@ -85,23 +85,39 @@ while True:
 
 s = []
 e = []
-length = len(eps)/100
-for i in range(100):
-    start = i * length
-    end = (i+1) * length
-    if end >= len(eps):
-        end = len(eps)-1
-    e.append(end)
-    s.append(np.average(scores[i*length:(i+1)*length]))
+if len(eps) > 300:
+	length = len(eps)/100
+	for i in range(100):
+	    start = i * length
+	    end = (i+1) * length
+	    if end >= len(eps):
+		end = len(eps)-1
+	    e.append(end)
+	    s.append(np.average(scores[i*length:(i+1)*length]))
+else:
+    s = scores
+    e = eps
 
+
+render_s = "Render: %r, " %do_render
+frames_s = "Frames: %d, " %stacks
+diff_s = "Use Diff: %r, " %diff
+elite_s = "Elitism: %r, " %elitism
+bench_s = "Test Verification: %s, " %test
+discrete_s = "Discrete Testing: %r, " %discrete
+minutes_s = "Minutes: %d, " %numMinutes
+clusters_s = "Clusters: %d, " %clusters
 
 
 print('bestscore :%d', bestReward)
 print('episodes :%d', episodes)
-_label0 = exercise #nice formating
+_label0 = exercise + "\n"+ render_s + frames_s + diff_s + elite_s + bench_s + discrete_s + minutes_s + clusters_s
 plt.xlabel("Episodes")
 plt.ylabel("Reward %")
-plt.plot(e, s, color='c', label=_label0)#plot graph (note won't work if also doing confusion matrix)
+plt.plot(e, s, color='c', label="rewards")
+#ax = plt.subplot(111)
+plt.title(_label0)
+frames_s = "Use Diff: %r\n" %diff
 plt.legend(loc="best")
 env.close()
 plt.figure()
