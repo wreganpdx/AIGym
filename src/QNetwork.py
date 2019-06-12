@@ -26,9 +26,11 @@ class QNetwork(object):
     global elitism
     global distances
     global epsilon
+    global novelty
+    global meld_type
 
 
-    def __init__(self, _clusters, _classes, _weights, stacks, diff, _test, _discrete, _elitism, _epsilon):
+    def __init__(self, _clusters, _classes, _weights, stacks, diff, _test, _discrete, _elitism, _epsilon, _novelty, _meld_type):
         global classes
         classes = np.arange(_classes)
         global Frames
@@ -70,6 +72,10 @@ class QNetwork(object):
         global distances
         global epsilon
         epsilon = _epsilon
+        global novelty
+        novelty = _novelty
+        global meld_type
+        meld_type = _meld_type
         distances = []
         elitism = _elitism
         discrete = _discrete
@@ -111,6 +117,8 @@ class QNetwork(object):
         global test
         global elitism
         global distances
+        global meld_type
+        global novelty
         rewards.append(rew);
         reset = False
         avgDist = np.average(distances)
@@ -164,7 +172,7 @@ class QNetwork(object):
         anealing = 1 - (float(T) / float(steps))
         if rand < anealing and lastReward >= totalReward:
             if reset != True:
-                QLearn.kmeansInstance(Frames, rewards, actions)
+                QLearn.kmeansInstance(Frames, rewards, actions, novelty, meld_type)
         lastReward = totalReward
         Frames = []
         actions = []

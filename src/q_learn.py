@@ -7,7 +7,6 @@ Final Project
 """
 
 import numpy as np
-import random
 from scipy.spatial import distance
 
 from sklearn.cluster import KMeans
@@ -53,11 +52,11 @@ class q_learn(object):
         cluster_action_values = _v
 
     @staticmethod
-    def kmeansInstance(states, _rewards, _actions):
+    def kmeansInstance(states, _rewards, _actions, novelty, meld_type):
         global createdKmeans
         global clusters
         if createdKmeans == True:
-            q_learn.meldNewClusters(states)
+            q_learn.meldNewClusters(states, novelty, meld_type)
         else:
             #only called once ever
             q_learn.createNewClusters(_rewards, states, _actions)
@@ -93,9 +92,21 @@ class q_learn(object):
         createdKmeans = True
         return
 
+    @staticmethod
+    def meldBase(a, meldType, noveltyBias):
+
+        avg = np.average(a)
+        if meldType == "Median":
+            avg = np.median(a)
+        if meldType == "Max":
+            avg = np.max(a)
+        if meldType == "Min":
+            avg = np.min(a)
+
+        return avg + avg * noveltyBias
 
     @staticmethod
-    def meldNewClusters(states):
+    def meldNewClusters(states, noveltyBias, meldType):
         global kmeans
         global clusters
         global actions
@@ -112,13 +123,16 @@ class q_learn(object):
         n = np.zeros((length, len(z)))
         for i in range(len(states)):
             n[i] = states[i].flatten()
+        avg = q_learn.meldBase(n, meldType, noveltyBias)
         newKmeans = KMeans(n_clusters=clusters).fit(n)
         #q_learn.createNewClusters(states)
         old_action_values = cluster_action_values[:]
-        cluster_action_values = np.zeros((clusters, actions))
-        clusterVals = np.zeros((clusters, actions))
+        cluster_action_values = np.empty((clusters, actions))
+        clusterVals = np.ones((clusters, actions))
 
-        clusterNum = np.zeros(clusters)
+        clusterVals = clusterVals * avg
+
+        clusterNum = np.ones(clusters)
         for i in range(len(oldKmeans.cluster_centers_)):
             t = []
             t.append(oldKmeans.cluster_centers_[i])
@@ -127,10 +141,9 @@ class q_learn(object):
                 clusterVals[cls][j] = clusterVals[cls][j] + old_action_values[i][j]
             clusterNum[cls] += 1
         for i in range(clusters):
-            if clusterNum[i] != 0:
-                clusterVals[i] = clusterVals[i] / clusterNum[i]
-                for j in range(actions):
-                    cluster_action_values[i][j] = clusterVals[i][j]
+            clusterVals[i] = clusterVals[i] / clusterNum[i]
+            for j in range(actions):
+                cluster_action_values[i][j] = clusterVals[i][j]
         kmeans = newKmeans
         return
 

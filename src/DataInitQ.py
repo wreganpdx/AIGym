@@ -21,26 +21,39 @@ class DataInitQ(object):
         elitism = True
         epsilon = .1
         eps_s = '%.4f' % epsilon
+        meld_type = "avg"
+        novelty = -.1
+        novelty_s = '%.4f' % novelty
         while ready != True:
             print("Current Settings: ")
             print("(M)inutes: %d" % numIterations)
-            print("(E)xercise: %s"% exercise)
-            print("(R)ender: %r"%render)
-            print("(C)lusters: %d"% clusters)
-            print("(F)rame Depth: %d"%stacks)
+            print("(E)xercise: %s" % exercise)
+            print("(R)ender: %r" % render)
+            print("(C)lusters: %d" % clusters)
+            print("(F)rame Depth: %d" % stacks)
             print("(D)ifference Function: %r" % diff)
             print("(T)est Verification: %s" % test)
             print("D(i)screte testing: %r" % discrete)
             print("E(L)itism: %r" % elitism)
-            print("(Z)ero Epsilon: %s"% eps_s)
+            print("(Z)ero Epsilon: %s" % eps_s)
+            print("(N)ovelty Bias: %s" % novelty_s)
+            print("(B)lend Type: %s" % meld_type)
             print("(S)tart")
-            print("Enter a command: E, R, C, F, S, T, I, M, L, Z")
+
+            print("Enter a command: E, R, C, F, S, T, I, M, L, Z, B, N")
             g = raw_input(":")
             if g == "Z" or g == "z":
                 print("What epsilon value should the simulation use?")
                 m = raw_input(":")
                 epsilon = float(m)
                 eps_s = '%.4f' % epsilon
+
+            if g == "N" or g == "n":
+                print("How much of a novelty bias should the algorithm use (-.25 .. .25)?")
+                m = raw_input(":")
+                novelty = float(m)
+                novelty_s = '%.4f' % novelty
+
             if g == "m" or g == "M":
                 print("How many minutes should the simulation run?")
                 m = raw_input(":")
@@ -65,6 +78,17 @@ class DataInitQ(object):
                     test = "Median"
                 if m == "X" or m == "x":
                     test = "Max"
+            if g == "B" or g == "b":
+                print("How to initialize values of a new cluster? (A)verage, (L)owest, (M)edian or MA(X)?")
+                m = raw_input(":")
+                if m == "A" or m == "a":
+                    meld_type = "Mean"
+                if m == "L" or m == "l":
+                    meld_type = "Min"
+                if m == "M" or m == "m":
+                    meld_type = "Median"
+                if m == "X" or m == "x":
+                    meld_type = "Max"
             if g == "R" or g == "r":
                 if render:
                     render = False
@@ -92,4 +116,4 @@ class DataInitQ(object):
                 ready = True
 
 
-        return (exercise, numIterations, render, stacks, diff, clusters, test, discrete, elitism, epsilon)
+        return (exercise, numIterations, render, stacks, diff, clusters, test, discrete, elitism, epsilon, novelty, meld_type)
