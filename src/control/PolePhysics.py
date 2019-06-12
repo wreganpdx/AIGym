@@ -33,10 +33,6 @@ def sigmoid(x):
         return z / (1 + z)
 
 
-def sigmoid_prime(z):
-    """Derivative of the sigmoid function."""
-    return Util.sigmoid(z) * (1 - Util.sigmoid(z))
-
 for T in range(stepNum):
     env.render()
     dec = sigmoid(action)
