@@ -1,4 +1,4 @@
-# AIGym
+# AIGym - For Machine Learning Atari to play games and similar Gym tasks.
 Gym stuff
 
 Most of these files are for seperate applications, so here's some idea of how it should be organized.
